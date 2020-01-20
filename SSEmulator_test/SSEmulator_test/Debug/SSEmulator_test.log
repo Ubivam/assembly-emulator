@@ -1,3 +1,3 @@
-﻿  linker.cpp
-C:\Users\Nordeus06\Desktop\SS\emulator\src\linker.cpp(52,19): warning C4018: '<': signed/unsigned mismatch
-  SSEmulator_test.vcxproj -> C:\Users\Nordeus06\Desktop\SS\emulator\SSEmulator_test\SSEmulator_test\Debug\SSEmulator_test.exe
+﻿  main.cpp
+C:\Users\joker\Documents\ETF_Projects\SS\emulator\src\main.cpp(32,26): warning C4244: 'initializing': conversion from 'unsigned long' to 'uint16_t', possible loss of data
+  SSEmulator_test.vcxproj -> C:\Users\joker\Documents\ETF_Projects\SS\emulator\SSEmulator_test\SSEmulator_test\Debug\SSEmulator_test.exe

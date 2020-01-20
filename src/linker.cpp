@@ -22,30 +22,58 @@ void Linker::connectSections()
 	}
 }
 
-void Linker::resolveGlobal()
-{
-
-}
-
 void Linker::resolveAdress()
 {
-	for (auto& sec : *_sectionTable)
+	for (auto& sec : _sectionTable->getTable())
 	{
-		uint16_t adr;
 		std::unordered_map<std::string, uint16_t>::const_iterator got = place_parameter.find(sec->getName());
 		if (got == place_parameter.end())
 		{
-			adr = location_pointer;
+			sec->setBegin(location_pointer);
+			sec->setEnd(sec->getEndLocationCounter() + sec->getBeginLocationCounter());
+			location_pointer += sec->getEndLocationCounter();
 		}
 		else
 		{
-			adr = got->second;
+			sec->setBegin(got->second);
+			sec->setEnd(sec->getEndLocationCounter() + sec->getBeginLocationCounter());
 		}
+
+	}
+	for (auto& sec : _sectionTable->getTable())
+	{
+		uint16_t adr;
+		adr = sec->getBeginLocationCounter();
 		auto table = sec->getTable();
 		auto current_code = sec->getData();
 
-		for(auto rel : *table)
+		for(auto rel : table->getTable())
 		{
+			std::shared_ptr<Symbol> symbol = std::shared_ptr<Symbol>(nullptr);
+			std::shared_ptr<Symbol> global_symbol = std::shared_ptr<Symbol>(nullptr);
+			for (auto s : *_symbolTable)
+			{
+				if (s->getIndex() == rel->getIndex()) {
+					if (s->getSection() == sec)
+					{
+						symbol = s;
+					}
+				}
+			}
+			if (!symbol)
+			{
+				all_adr_correct = false;
+				return;
+			}
+			if (!symbol->isLocal() && !symbol->getSection()) 
+			{
+				global_symbol = resolveGlobalSymbol(symbol);
+				if (!global_symbol)
+				{
+					all_adr_correct = false;
+					return;
+				}
+			}
 			auto off = rel->getOffset();
 			int loc_cnt = 0;
 			uint32_t ins_ind=0;
@@ -59,31 +87,47 @@ void Linker::resolveAdress()
 					uint8_t second = 0;
 					switch (reloc_mem_part)
 					{
-						//GLOBAL SYMBOL REL
-					case 0x0000:
-						break;
-
-						//LOCAL SYMBOL ABS
-					case 0x0004:
-						first = (uint8_t)((adr + off & 0xFF00) >> 8);
-						second = (uint8_t)(adr + off & 0x00FF);
-						break;
-
 						//GLOBAL SYMBOL ABS
-					case 0xFFFC:
+					case 0x0000:
+						first = (uint8_t)((symbol->getSection()->getBeginLocationCounter() + symbol->getOffset() & 0xFF00) >> 8);
+						second = (uint8_t)(symbol->getSection()->getBeginLocationCounter() + symbol->getOffset() & 0x00FF);
+						break;
+						//LOCAL SYMBOL REL
+					case 0x0002:
+						if (!symbol->isLocal())
+						{
+							all_adr_correct = false;
+							return;
+						}
+						first = (uint8_t)((symbol->getOffset() - loc_cnt & 0xFF00) >> 8);
+						second = (uint8_t)(symbol->getOffset() - loc_cnt & 0x00FF);
 						break;
 
-						//LOCAL SYMBOL REL
+						//GLOBAL SYMBOL REL
+					case 0xFFFC:
+						if (symbol->isLocal())
+						{
+							first = (uint8_t)(((symbol->getSection()->getBeginLocationCounter() + symbol->getOffset()) - loc_cnt & 0xFF00) >> 8);
+							second = (uint8_t)((symbol->getSection()->getBeginLocationCounter() + symbol->getOffset()) - loc_cnt & 0x00FF);
+							all_adr_correct = false;
+							return;
+						}
+						break;
+						//LOCAL SYMBOL ABS
 					default:
-						auto pc_relative_adr = reloc_mem_part - off;
-						first = (uint8_t)((pc_relative_adr & 0xFF00) >> 8);
-						second = (uint8_t)(pc_relative_adr & 0x00FF);
+						if (!symbol->isLocal())
+						{
+							all_adr_correct = false;
+							return;
+						}
+						first = (uint8_t)((adr + reloc_mem_part & 0xFF00) >> 8);
+						second = (uint8_t)(adr + reloc_mem_part & 0x00FF);
 						break;
 					}
 					
 					current_code[ins_ind][second_layer_index] = second;
 					current_code[ins_ind][second_layer_index + 1] = first;
-					loc_cnt += 2;
+					loc_cnt += second_layer_index;
 				}
 				else
 				{
@@ -93,13 +137,17 @@ void Linker::resolveAdress()
 			}
 		}
 		sec->insertData(current_code);
-		location_pointer += sec->getEndLocationCounter();
 	}
 }
 
 void Linker::insertPlaceParameter(std::string sec, uint32_t adr)
 {
 	place_parameter.insert(std::make_pair<>(sec, adr));
+}
+
+bool Linker::areAllAdressCorrect()
+{
+	return all_adr_correct;
 }
 
 std::shared_ptr<SectionTable> Linker::getSectionTable() const
@@ -123,9 +171,22 @@ std::shared_ptr<Linker> Linker::getInstance()
 	return ptr;
 }
 
+std::shared_ptr<Symbol> Linker::resolveGlobalSymbol(std::shared_ptr<Symbol> s)
+{
+	for (auto symbol : *_symbolTable)
+	{
+		if (symbol != s && (symbol->getName() == s->getName()))
+		{
+			return symbol;
+		}
+	}
+	return nullptr;
+}
+
 Linker::Linker()
 {
+	all_adr_correct = true;
 	_sectionTable = std::make_shared<SectionTable>();
 	_symbolTable = std::make_shared<SymbolTable>();
-	location_pointer = 0x00FF;
+	location_pointer = 1000;
 }

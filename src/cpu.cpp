@@ -34,6 +34,7 @@ void Cpu::cpuInit()
 
 void Cpu::cpuWorkLoop()
 {
+	jumpToResetHandler();
 	while (!is_halt)
 	{
 		instructionFeatch();
@@ -46,6 +47,21 @@ void Cpu::cpuWorkLoop()
 void Cpu::setActiveMemory(std::shared_ptr<Memory> m)
 {
 	mem = m;
+}
+
+void Cpu::interruptRequest(uint8_t intr, bool& ack, uint8_t entry)
+{
+	if (entry = 1)
+	{
+		_op_code = 0x01;
+	}
+}
+
+void Cpu::jumpToResetHandler()
+{
+	auto a1 = mem->readLocation(0);
+	auto a2 = mem->readLocation(1);
+	r[7] = a2 << 8 | a1;
 }
 
 void Cpu::instructionFeatch()

@@ -16,8 +16,10 @@ public:
 	void cpuInit();
 	void cpuWorkLoop();
 	void setActiveMemory(std::shared_ptr<Memory> m);
+	void interruptRequest(uint8_t intr, bool& ack, uint8_t entry);
 
 public:
+	void jumpToResetHandler();
 	void instructionFeatch();
 	void addrPhase();
 	void execPhase();
@@ -48,9 +50,6 @@ private:
 	bool intr_req1;
 	bool intr_req2;
 	bool intr_req3;
-	bool intr_ack1;
-	bool intr_ack2;
-	bool intr_ack3;
 };
 
 

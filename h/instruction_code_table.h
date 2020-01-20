@@ -7,6 +7,7 @@
 #include "operation.h"
 #include "asm/def.h"
 #include "asm/macros.h"
+#include "cpu.h"
 
 class InstructionCodeTable {
 

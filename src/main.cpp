@@ -6,31 +6,62 @@
 #include "../h/cpu.h"
 #include "../h/utility.h"
 #include "../h/linker.h"
+#include "../h/asm/section.h"
+#include "../h/asm/def.h"
+#include "../h/asm/macros.h"
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
-        /*if (argc < 3)
-        {
-                PRINT("You entered wrong arguments");
-                return -1;
-        }*/
     std::shared_ptr<Linker> linker = Linker::getInstance();
     InstructionCodeTable::init();
-    Utility::readBinFile(argv[1]);
+    Utility::readBinFile("initialize_system.so");
+    uint32_t place_param = 1;
+    auto count_param = 1;
+    for (int i = 1; i < argc; i++)
+    {
+        if (argv[i][0] == '-')
+        {
+            count_param++;
+            std::string arg = argv[i];
+            auto pos1 = arg.find_first_of('=');
+            std::string section_name = arg.substr(pos1 + 1, std::string::npos);
+            auto pos2 = section_name.find_first_of('@');
+            section_name = section_name.substr(0, pos2);
+            pos2 = arg.find_first_of('@');
+            std::string adr_s = arg.substr(pos2 + 1, std::string::npos);
+            uint16_t adr = strtoul(adr_s.c_str(), nullptr, 16);
+            linker->insertPlaceParameter(section_name, adr);
+        }
+    }
+    for (int i = count_param; i < argc; i++)
+    {
+        Utility::readBinFile(argv[i]);
+    }
+    Utility::setIVTSectionCounters();
     linker->resolveAdress();
+    if (!linker->areAllAdressCorrect())
+    {
+        PRINT("There was an error with symbols in sections!");
+        return -1;
+    }
     Utility::printCode();
     std::shared_ptr<Memory> mem = std::make_shared<Memory>();
-    mem->loadMemorySegment(0,Utility::code);
-    mem->writeToLocation(0, 0x9c);
-    mem->writeToLocation(2, 0x16);
-    mem->writeToLocation(1001, 0xFF);
-    mem->writeToLocation(1002, 0xFF);
-    mem->writeToLocation(1003, 0xFF);
-    std::vector<uint8_t> seg;
-    seg.push_back(0x0b);
-    seg.push_back(0x0c);
-    seg.push_back(0x0d);
-    mem->loadMemorySegment(1200, seg);
+    Utility::linkerScriptIVT(mem);
+    auto section_tab = linker->getSectionTable()->getTable();
+    for (auto sec : section_tab)
+    {
+        if (sec == section_tab[0] || sec == section_tab[1] || sec == section_tab[2] || sec == section_tab[3] || sec == section_tab[4])
+            continue;
+        Instruction code;
+        for (auto inst : sec->getData())
+        {
+            for (auto& word : inst)
+            {
+                code.push_back(word);
+            }
+        }
+        mem->loadMemorySegment(sec->getBeginLocationCounter(), code);
+    }
     PRINT(mem->to_string_memory_sector(0, 4000));
     std::shared_ptr<Cpu> cpu = Cpu::getInstance();
     cpu->setActiveMemory(mem);
