@@ -51,6 +51,12 @@
     <ClInclude Include="..\..\h\linker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\h\timer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\h\terminal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\asm\relocation_entry.cpp">
@@ -81,6 +87,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\linker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\terminal.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\timer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
