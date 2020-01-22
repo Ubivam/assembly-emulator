@@ -1,4 +1,4 @@
-#include "..\h\linker.h"
+#include "../h/linker.h"
 
 std::weak_ptr<Linker> Linker::mInstance;
 
