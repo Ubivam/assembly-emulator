@@ -12,9 +12,9 @@ LDFLAGS=
 EXECUTABLE=$(BIN_FILE)/emulator
 all: make_dirs $(SOURCES) $(EXECUTABLE)
 $(EXECUTABLE): $(OBJECTS)
-	$(CC) $(LDFLAGS) $(OBJECTS)  -o $@
+	$(CC) $(LDFLAGS) $(OBJECTS)  -o $@ -lpthread
 $(OBJ_FILE)/%.o: $(SRC_FILE)/%.cpp
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@ -lpthread
 .PHONY: clean clean_obj clean_exe clean_~ make_dirs
 make_dirs:
 	mkdir -p $(BIN_FILE)
