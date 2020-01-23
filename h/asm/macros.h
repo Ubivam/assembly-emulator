@@ -71,8 +71,18 @@
 #define RET 0x18
 #define IRET 0x19
 
+//Timers
+#define _500MS 0x0
+#define _1000MS 0x1
+#define _1500MS 0x2
+#define _2000MS 0x3
+#define _5000MS 0x4
+#define _10S 0x5
+#define _30S 0x6
+#define _60S 0x7
 
-
+#define TERMINAL_INTERRUPT 0xF;
+#define CLOCK_INTERRUPT 0xFF;
 //Apsolutna adresa za realokaciju simbola stavlja 32 bitnu adresu simbola u memorijsku lokaciju
 #define R_386_32 true
 //PC Relativna adresa za realokaciju simbola stavlja 32 bitnu realtivnu adresu simbola u memorijsku lokaciju

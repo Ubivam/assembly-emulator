@@ -1,3 +1,4 @@
-﻿  main.cpp
-C:\Users\joker\Documents\ETF_Projects\SS\emulator\src\main.cpp(32,26): warning C4244: 'initializing': conversion from 'unsigned long' to 'uint16_t', possible loss of data
+﻿  timer.cpp
+C:\Users\joker\Documents\ETF_Projects\SS\emulator\src\timer.cpp(34,21): warning C4244: '=': conversion from 'double' to 'uint16_t', possible loss of data
+C:\Users\joker\Documents\ETF_Projects\SS\emulator\src\timer.cpp(40,21): warning C4244: '=': conversion from 'double' to 'uint16_t', possible loss of data
   SSEmulator_test.vcxproj -> C:\Users\joker\Documents\ETF_Projects\SS\emulator\SSEmulator_test\SSEmulator_test\Debug\SSEmulator_test.exe

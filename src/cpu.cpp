@@ -2,7 +2,7 @@
 #include <vector>
 
 std::shared_ptr<Cpu> Cpu::mInstance = std::shared_ptr<Cpu>(nullptr);
-
+uint16_t Cpu::r4_reg_value = 0;
 Cpu::Cpu()
 {
 	cpuInit();
@@ -19,6 +19,8 @@ std::shared_ptr<Cpu> Cpu::getInstance()
 
 void Cpu::cpuInit()
 {
+	interrupted = false;
+	intr_entry = 0;
 	is_halt = false;
 	AB = 0;
 	BB = 0;
@@ -27,8 +29,9 @@ void Cpu::cpuInit()
 	AB = BB = 0;
 	for (int i = 0; i < 8; i++)
 	{
-		r[7] = 0;
+		r[i] = 0;
 	}
+	r[6] = 0xF000;
 	psw = 0;
 }
 
@@ -42,6 +45,7 @@ void Cpu::cpuWorkLoop()
 		execPhase();
 		interruptPhase();
 	}
+	r4_reg_value = r[4];
 }
 
 void Cpu::setActiveMemory(std::shared_ptr<Memory> m)
@@ -49,18 +53,21 @@ void Cpu::setActiveMemory(std::shared_ptr<Memory> m)
 	mem = m;
 }
 
-void Cpu::interruptRequest(uint8_t intr, bool& ack, uint8_t entry)
+void Cpu::interruptRequest(uint8_t entry)
 {
-	if (entry = 1)
-	{
-		_op_code = 0x01;
-	}
+	interrupted = true;
+	intr_entry = entry;
+}
+
+uint16_t Cpu::testGetRegister(int num)
+{
+	return r[num];
 }
 
 void Cpu::jumpToResetHandler()
 {
-	auto a1 = mem->readLocation(0);
-	auto a2 = mem->readLocation(1);
+	auto a1 = mem->readLocation(0x0);
+	auto a2 = mem->readLocation(0x1);
 	r[7] = a2 << 8 | a1;
 }
 
@@ -71,7 +78,7 @@ void Cpu::instructionFeatch()
 	_op_code = instReg[0] >> 3;
 	if (_op_code == 0x1 || _op_code == 0x18 || _op_code == 0x19)
 		return;
-	_is_byte_size = instReg[0] & 0x02;
+	_is_byte_size = !(instReg[0] & 0x02);
 	//TODO: SHARED RESOURCE ACCESS
 	instReg[1] = mem->readLocation(r[7]++);
 	_adr1 = instReg[1] >> 5;
@@ -104,14 +111,7 @@ void Cpu::instructionFeatch()
 		}
 		break;
 	case MEMDIR:
-		if (_is_byte_size)
-		{
-			op_size = 2;
-		}
-		else
-		{
 			op_size = 3;
-		}
 		break;
 	}
 	if (op_size > 1)
@@ -158,14 +158,7 @@ void Cpu::instructionFeatch()
 			}
 			break;
 		case MEMDIR:
-			if (_is_byte_size)
-			{
-				op_size = 2;
-			}
-			else
-			{
-				op_size = 3;
-			}
+			op_size = 3;
 			break;
 		}
 		if (op_size > 1)
@@ -215,7 +208,7 @@ void Cpu::addrPhase()
 		break;
 	case MEMDIR:
 		op = _op1_high << 8 | _op1_low;
-		AB = mem->readLocation(op);
+		AB = op;
 		break;
 	}
 
@@ -276,6 +269,10 @@ void Cpu::execPhase()
 		r[7] = mem->readLocation((AB % 8) * 2) | (mem->readLocation((AB + 1 % 8) * 2) << 8);
 		break;
 	case MOV:
+		if (_adr1 == MEMDIR) 
+		{
+			mem->writeToLocation(AB, BB);
+		}
 		AB = BB;
 		if (AB == 0) psw |= PSW_Z;
 		if (AB < 0) psw |= PSW_N;
@@ -391,22 +388,41 @@ void Cpu::execPhase()
 		r[7] = (_op1_high << 8) | _op1_low;
 		break;
 	case RET:
-		first = mem->readLocation(r[6]--);
-		second = mem->readLocation(r[6]--);
+		first = mem->readLocation(--r[6]);
+		second = mem->readLocation(--r[6]);
 		r[7] = (first << 8) | second;
 		break;
 	case IRET:
-		first = mem->readLocation(r[6]--);
-		second = mem->readLocation(r[6]--);
+		first = mem->readLocation(--r[6]);
+		second = mem->readLocation(--r[6]);
 		psw = (first << 8) | second;
 
-		first = mem->readLocation(r[6]--);
-		second = mem->readLocation(r[6]--);
+		first = mem->readLocation(--r[6]);
+		second = mem->readLocation(--r[6]);
 		r[7] = (first << 8) | second;
 		break;
+	}
+	if (_adr1 == REGDIR)
+	{
+		r[_reg1] = AB;
 	}
 }
 
 void Cpu::interruptPhase()
 {
+	if (interrupted) 
+	{
+		auto first = (uint8_t)((r[7] & 0xFF00) >> 8);
+		auto second = (uint8_t)(r[7] & 0x00FF);
+		mem->writeToLocation(r[6]++, second);
+		mem->writeToLocation(r[6]++, first);
+		first = (uint8_t)((psw & 0xFF00) >> 8);
+		second = (uint8_t)(psw & 0x00FF);
+		mem->writeToLocation(r[6]++, second);
+		mem->writeToLocation(r[6]++, first);
+		auto a1 = mem->readLocation(intr_entry * 2);
+		auto a2 = mem->readLocation(intr_entry * 2 + 0x1);
+		r[7] = a2 << 8 | a1;
+		interrupted = false;
+	}
 }

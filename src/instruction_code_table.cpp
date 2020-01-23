@@ -70,8 +70,7 @@ bool InstructionCodeTable::isSignleOperand(uint8_t code)
     if (_map.find(code) == _map.end())
     {
         PRINT("ERROR IN INSTRUCTION CODE OCURRED");
-        bool b = false;
-        Cpu::getInstance()->interruptRequest(1, b, 1);
+        Cpu::getInstance()->interruptRequest(1);
         return false;
     }
     return _map.find(code)->second->getIsSingleOperand();

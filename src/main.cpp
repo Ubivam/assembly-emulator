@@ -2,6 +2,7 @@
 #include "../h/asm/table.h"
 #include <fstream>
 #include <memory>
+#include <thread>
 #include "../h/memory.h"
 #include "../h/cpu.h"
 #include "../h/utility.h"
@@ -9,12 +10,14 @@
 #include "../h/asm/section.h"
 #include "../h/asm/def.h"
 #include "../h/asm/macros.h"
+#include "../h/timer.h"
+#include "../h/terminal.h"
 
 int main(int argc, char* argv[])
 {
     std::shared_ptr<Linker> linker = Linker::getInstance();
     InstructionCodeTable::init();
-    Utility::readBinFile("initialize_system.so");
+    Utility::readBinFile("initialize_system.o");
     uint32_t place_param = 1;
     auto count_param = 1;
     for (int i = 1; i < argc; i++)
@@ -36,7 +39,7 @@ int main(int argc, char* argv[])
     for (int i = count_param; i < argc; i++)
     {
         Utility::readBinFile(argv[i]);
-    }
+    } 
     Utility::setIVTSectionCounters();
     linker->resolveAdress();
     if (!linker->areAllAdressCorrect())
@@ -65,7 +68,20 @@ int main(int argc, char* argv[])
     PRINT(mem->to_string_memory_sector(0, 4000));
     std::shared_ptr<Cpu> cpu = Cpu::getInstance();
     cpu->setActiveMemory(mem);
-    cpu->cpuWorkLoop();
-   
+ //   cpu->cpuWorkLoop();
+    std::thread cpu_thread(&Cpu::cpuWorkLoop, cpu);
+    cpu_thread.detach();
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    Timer tim;
+    tim.setActiveMemory(mem);
+    tim.configureTimerFromMem();
+    std::thread timer_thread(&Timer::timerLoop, tim);
+    timer_thread.detach();
+    Terminal term;
+    term.setActiveMemory(mem);
+    //std::thread terminal_therad(&Terminal::terminalLoop, term);
+    term.terminalLoop();
+    int x;
+    std::cin >> x;
     return 0;
 }

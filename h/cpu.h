@@ -12,12 +12,16 @@ class Cpu
 public:
 	Cpu();
 	static std::shared_ptr<Cpu> getInstance();
+	static uint16_t r4_reg_value;
 public:
 	void cpuInit();
 	void cpuWorkLoop();
 	void setActiveMemory(std::shared_ptr<Memory> m);
-	void interruptRequest(uint8_t intr, bool& ack, uint8_t entry);
+	void interruptRequest(uint8_t entry);
 
+public:
+	//test
+	uint16_t testGetRegister(int num);
 public:
 	void jumpToResetHandler();
 	void instructionFeatch();
@@ -47,9 +51,8 @@ private:
 	uint8_t _op_code;
 
 	//Interrupts
-	bool intr_req1;
-	bool intr_req2;
-	bool intr_req3;
+	uint8_t intr_entry;
+	bool interrupted;
 };
 
 
