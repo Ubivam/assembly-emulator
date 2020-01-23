@@ -1,4 +1,1 @@
-﻿  timer.cpp
-C:\Users\joker\Documents\ETF_Projects\SS\emulator\src\timer.cpp(34,21): warning C4244: '=': conversion from 'double' to 'uint16_t', possible loss of data
-C:\Users\joker\Documents\ETF_Projects\SS\emulator\src\timer.cpp(40,21): warning C4244: '=': conversion from 'double' to 'uint16_t', possible loss of data
-  SSEmulator_test.vcxproj -> C:\Users\joker\Documents\ETF_Projects\SS\emulator\SSEmulator_test\SSEmulator_test\Debug\SSEmulator_test.exe
+﻿  SSEmulator_test.vcxproj -> C:\Users\Nordeus06\Desktop\SS\emulator\SSEmulator_test\SSEmulator_test\Debug\SSEmulator_test.exe
